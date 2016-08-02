@@ -6,10 +6,13 @@
 
 var socket        = io(),
     playerNum,
+    opponentNum,
     gameId;
 
 socket.on('joinedGame', function(msg) {
   playerNum = msg.playerNum;
+  opponentNum = (playerNum === 1) ? 2 : 1;
+  console.log(playerNum, opponentNum);
   gameId = msg.gameId
 });
 
@@ -36,8 +39,13 @@ function initGame() {
   this.winLength     = 4;
   this.turn          = 1;
 
+  socket.on('opponentMoveMade', function(msg) {
+    drawPiece(msg.r, msg.c, opponentNum);
+    grid[msg.r][msg.c].owner = opponentNum;
+  });
+
   // Handle mapping of mouse position to cursor piece
-  $('#viewport').on('mousemove', ((event) => {
+  $('#viewport').on('mousemove', (event) => {
     updateBoard();
 
     // Which position on the board is closest to the mouse's position?
@@ -60,7 +68,7 @@ function initGame() {
   });
 
   // Handle setting a piece on the board
-  $('#viewport').on('click', (() => {
+  $('#viewport').on('click', () => {
     socket.emit('moveMade', {
       r: currIndex.r,
       c: currIndex.c
@@ -176,10 +184,10 @@ function initGame() {
     ctx.stroke();
   }
 
-  function drawPiece(x, y, fill) {
+  function drawPiece(x, y, player) {
     ctx.beginPath();
     ctx.arc(x, y, 10, 0, Math.PI * 2);
-    ctx.fillStyle = (fill === 1) ? 'blue' : 'red';
+    ctx.fillStyle = (player === 1) ? 'blue' : 'red';
     ctx.fill();
     ctx.stroke();
   }
