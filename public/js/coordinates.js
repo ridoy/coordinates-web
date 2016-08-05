@@ -4,7 +4,10 @@
  * Version: 0.0.1
  */
 
-var socket        = io(),
+// Emit game over
+// Alternating turns
+
+var socket = io(),
     playerNum,
     opponentNum,
     gameId;
@@ -12,7 +15,6 @@ var socket        = io(),
 socket.on('joinedGame', function(msg) {
   playerNum = msg.playerNum;
   opponentNum = (playerNum === 1) ? 2 : 1;
-  console.log(playerNum, opponentNum);
   gameId = msg.gameId
 });
 
@@ -24,7 +26,6 @@ socket.on('gameCanceled', function() {
   $('#viewport').off('mousemove, click');
   // Show beginning dialog
 });
-
 
 function initGame() {
   this.canvas        = document.getElementById('viewport');
@@ -39,9 +40,33 @@ function initGame() {
   this.winLength     = 4;
   this.turn          = 1;
 
+  socket.on('gameIsOver', function(msg) {
+    endGame(msg.winner);
+  });
+
+  function alternateTurn() {
+    turn = (turn === 1) ? 2 : 1;
+    if (turn !== playerNum){
+      $('.status').text('Waiting for opponent to make a move...')
+    } else {
+      $('.status').text('')
+    }
+  }
+
+  function endGame(winner) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    $('.status').text('Player ' + winner + ' wins!');
+  }
+
+  if (turn !== playerNum) {
+    $('.status').text('Waiting for opponent to make a move...')
+  }
+
   socket.on('opponentMoveMade', function(msg) {
-    drawPiece(msg.r, msg.c, opponentNum);
+    // Alternate turn
+    alternateTurn();
     grid[msg.r][msg.c].owner = opponentNum;
+    drawPiece(msg.r, msg.c);
   });
 
   // Handle mapping of mouse position to cursor piece
@@ -69,21 +94,23 @@ function initGame() {
 
   // Handle setting a piece on the board
   $('#viewport').on('click', () => {
-    socket.emit('moveMade', {
-      r: currIndex.r,
-      c: currIndex.c
-    });
-    if (!grid[currIndex.r][currIndex.c].owner) {
-      grid[currIndex.r][currIndex.c].owner = turn;
+    if (!grid[currIndex.r][currIndex.c].owner && turn === playerNum) {
+      grid[currIndex.r][currIndex.c].owner = playerNum;
       var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
       if (winner) {
-        console.log('winner: ' + winner);
-        resetGrid();
-        drawBoard();
+        ctx.clearRect(0,0,canvas.width, canvas.height)
+        $('.status').text(winner + ' wins!')
+        socket.emit('gameOver');
+        endGame(winner);
+      } else {
+        socket.emit('moveMade', {
+          r: currIndex.r,
+          c: currIndex.c
+        });
+        updateBoard();
+        alternateTurn();
       }
     }
-    updateBoard();
-    turn = (turn === 1) ? 2 : 1;
   });
 
   function checkWin(player) {
@@ -184,10 +211,14 @@ function initGame() {
     ctx.stroke();
   }
 
-  function drawPiece(x, y, player) {
+  function drawPiece(r, c) {
+    x = grid[r][c].x
+    y = grid[r][c].y
+    player = grid[r][c].owner
     ctx.beginPath();
     ctx.arc(x, y, 10, 0, Math.PI * 2);
     ctx.fillStyle = (player === 1) ? 'blue' : 'red';
+
     ctx.fill();
     ctx.stroke();
   }
@@ -200,7 +231,7 @@ function initGame() {
     for (var r = 0; r < numRows; r++) {
       for (var c = 0; c < numCols; c++) {
         if (grid[r][c].owner) {
-          drawPiece(grid[r][c].x, grid[r][c].y, grid[r][c].owner)
+          drawPiece(r, c)
         }
       }
     }
@@ -223,5 +254,4 @@ function initGame() {
       }
     }
   }
-
 }

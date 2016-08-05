@@ -16,8 +16,19 @@ app.use(express.static('public'));
 var games = [];
 
 function getAvailableGame() {
-  for (var i = 0; i < games.length; i++) {
-    if (games[i].players.length === 1) return games[i];
+  for (let game of games) {
+    if (game.players.length === 1) return game;
+  }
+  return false;
+}
+
+function getOpponent(gameId, playerNum) {
+  for (let game of games) {
+    if (game.id === gameId) {
+      for (let player of game.players) {
+        if (player.playerNum !== playerNum) return player;
+      }
+    }
   }
   return false;
 }
@@ -31,8 +42,8 @@ io.on('connection', (client) => {
     client.gameId = availableGame.id
     client.playerNum = 2;
     availableGame.players.push(client);
-    for (var i = 0; i < availableGame.players.length; i++) {
-      availableGame.players[i].emit('gameReady');
+    for (let player of availableGame.players) {
+      player.emit('gameReady');
     }
   } else {
     // Create new game
@@ -43,6 +54,7 @@ io.on('connection', (client) => {
       id: client.gameId
     });
   }
+  console.log(games);
 
   client.emit('joinedGame', {
     playerNum: client.playerNum,
@@ -53,8 +65,8 @@ io.on('connection', (client) => {
     console.log('Player' + client.id + ' disconnected');
     if (client.gameId) {
       for (var i = 0; i < games.length; i++) {
-        for (var j = 0; j < games[i].players.length; j++) {
-          games[i].players[j].emit('gameCanceled');
+        for (let player of games[i].players) {
+          player.emit('gameCanceled');
         }
         games.splice(i, 1);
       }
@@ -62,7 +74,18 @@ io.on('connection', (client) => {
   });
 
   client.on('moveMade', function(msg) {
+    var opponent = getOpponent(client.gameId, client.playerNum);
+    opponent.emit('opponentMoveMade', {
+      r: msg.r,
+      c: msg.c
+    });
+  });
 
+  client.on('gameOver', function(msg) {
+    var opponent = getOpponent(client.gameId, client.playerNum);
+    opponent.emit('gameIsOver', {
+      winner: client.playerNum
+    })
   });
 });
 
