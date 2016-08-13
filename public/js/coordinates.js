@@ -4,254 +4,258 @@
  * Version: 0.0.1
  */
 
-// Emit game over
-// Alternating turns
+$('#viewport, #leave-button').hide()
+$('#name-field, #join-button').show()
 
-var socket = io(),
-    playerNum,
-    opponentNum,
-    gameId;
+$('#join-button').click(() => {
 
-socket.on('joinedGame', function(msg) {
-  playerNum = msg.playerNum;
-  opponentNum = (playerNum === 1) ? 2 : 1;
-  gameId = msg.gameId
-});
+  var socket = io(),
+      playerNum,
+      opponentNum,
+      gameId;
 
-socket.on('gameReady', function(msg) {
-  initGame();
-});
-
-socket.on('gameCanceled', function() {
-  $('#viewport').off('mousemove, click');
-  // Show beginning dialog
-});
-
-function initGame() {
-  this.canvas        = document.getElementById('viewport');
-  this.ctx           = this.canvas.getContext('2d');
-  this.canvas.width  = 500;
-  this.canvas.height = 500;
-  this.boardRadius   = 250;
-  this.grid          = {};
-  this.currIndex     = { r: 0, c: 0 }
-  this.numRows       = 4;
-  this.numCols       = 8;
-  this.winLength     = 4;
-  this.turn          = 1;
-
-  socket.on('gameIsOver', function(msg) {
-    endGame(msg.winner);
+  socket.on('joinedGame', function(msg) {
+    playerNum = msg.playerNum;
+    opponentNum = (playerNum === 1) ? 2 : 1;
+    gameId = msg.gameId
   });
 
-  function alternateTurn() {
-    turn = (turn === 1) ? 2 : 1;
-    if (turn !== playerNum){
-      $('.status').text('Waiting for opponent to make a move...')
-    } else {
-      $('.status').text('')
-    }
-  }
-
-  function endGame(winner) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    $('.status').text('Player ' + winner + ' wins!');
-  }
-
-  if (turn !== playerNum) {
-    $('.status').text('Waiting for opponent to make a move...')
-  }
-
-  socket.on('opponentMoveMade', function(msg) {
-    // Alternate turn
-    alternateTurn();
-    grid[msg.r][msg.c].owner = opponentNum;
-    drawPiece(msg.r, msg.c);
+  socket.on('gameReady', function(msg) {
+    initGame();
   });
 
-  // Handle mapping of mouse position to cursor piece
-  $('#viewport').on('mousemove', (event) => {
-    updateBoard();
-
-    // Which position on the board is closest to the mouse's position?
-    var minDist = canvas.width;
-    for (var r = 0; r < numRows; r++) {
-      for (var c = 0; c < numCols; c++) {
-        var dist = Math.sqrt(Math.pow(event.offsetX - grid[r][c].x, 2) + Math.pow(event.offsetY - grid[r][c].y, 2));
-        if (dist < minDist) {
-          minDist = dist;
-          currIndex = {
-            r: r,
-            c: c
-          };
-        }
-      }
-    }
-
-    var position = grid[currIndex.r][currIndex.c];
-    drawCursor(position.x, position.y);
+  socket.on('gameCanceled', function() {
+    $('#viewport').off('mousemove, click');
+    // Show beginning dialog
   });
 
-  // Handle setting a piece on the board
-  $('#viewport').on('click', () => {
-    if (!grid[currIndex.r][currIndex.c].owner && turn === playerNum) {
-      grid[currIndex.r][currIndex.c].owner = playerNum;
-      var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
-      if (winner) {
-        ctx.clearRect(0,0,canvas.width, canvas.height)
-        $('.status').text(winner + ' wins!')
-        socket.emit('gameOver');
-        endGame(winner);
+  function initGame() {
+    this.canvas        = document.getElementById('viewport');
+    this.ctx           = this.canvas.getContext('2d');
+    this.canvas.width  = 500;
+    this.canvas.height = 500;
+    this.boardRadius   = 250;
+    this.grid          = {};
+    this.currIndex     = { r: 0, c: 0 }
+    this.numRows       = 4;
+    this.numCols       = 8;
+    this.winLength     = 4;
+    this.turn          = 1;
+
+    socket.on('gameIsOver', function(msg) {
+      endGame(msg.winner);
+    });
+
+    function alternateTurn() {
+      turn = (turn === 1) ? 2 : 1;
+      if (turn !== playerNum){
+        $('.status').text('Waiting for opponent to make a move...')
       } else {
-        socket.emit('moveMade', {
-          r: currIndex.r,
-          c: currIndex.c
-        });
-        updateBoard();
-        alternateTurn();
+        $('.status').text('')
       }
     }
-  });
 
-  function checkWin(player) {
-    // Circular win check
-    for (var r = 0; r < numRows; r++) {
-      var stack = [];
-      for (var c = 0; c < numCols + winLength; c++) {
-        if (grid[r][c % numCols].owner === player) {
-          stack.push({r: r, c: c});
-        } else {
-          stack = [];
-        }
-        if (stack.length === winLength) return true;
-      }
+    function endGame(winner) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      $('.status').text('Player ' + winner + ' wins!');
     }
-    // Outward win check
-    for (var c = 0; c < numCols; c++) {
-      var stack = [];
+
+    if (turn !== playerNum) {
+      $('.status').text('Waiting for opponent to make a move...')
+    }
+
+    socket.on('opponentMoveMade', function(msg) {
+      // Alternate turn
+      alternateTurn();
+      grid[msg.r][msg.c].owner = opponentNum;
+      drawPiece(msg.r, msg.c);
+    });
+
+    // Handle mapping of mouse position to cursor piece
+    $('#viewport').on('mousemove', (event) => {
+      updateBoard();
+
+      // Which position on the board is closest to the mouse's position?
+      var minDist = canvas.width;
       for (var r = 0; r < numRows; r++) {
-        if (grid[r][c].owner === player) {
-          stack.push({r: r, c: c});
-        } else {
-          stack = [];
+        for (var c = 0; c < numCols; c++) {
+          var dist = Math.sqrt(Math.pow(event.offsetX - grid[r][c].x, 2) + Math.pow(event.offsetY - grid[r][c].y, 2));
+          if (dist < minDist) {
+            minDist = dist;
+            currIndex = {
+              r: r,
+              c: c
+            };
+          }
         }
-        if (stack.length === winLength) return true; 
       }
-    }
-    // Clockwise spiral win check
-    for (var c = 0; c < numCols; c++) {
-      var stack = [];
-      var pivot = c;
-      var r = 0;
-      done = false
-      while (!done) {
-        adjustedPivot = ((pivot % numCols) + numCols) % numCols
-        if (grid[r][adjustedPivot].owner === player) {
-          stack.push({r: r, c: adjustedPivot});
-          pivot++;
-          r++;
+
+      var position = grid[currIndex.r][currIndex.c];
+      drawCursor(position.x, position.y);
+    });
+
+    // Handle setting a piece on the board
+    $('#viewport').on('click', () => {
+      if (!grid[currIndex.r][currIndex.c].owner && turn === playerNum) {
+        grid[currIndex.r][currIndex.c].owner = playerNum;
+        var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
+        if (winner) {
+          ctx.clearRect(0,0,canvas.width, canvas.height)
+          $('.status').text(winner + ' wins!')
+          socket.emit('gameOver');
+          endGame(winner);
         } else {
-          done = true;
+          socket.emit('moveMade', {
+            r: currIndex.r,
+            c: currIndex.c
+          });
+          updateBoard();
+          alternateTurn();
         }
-        if (stack.length === winLength) return true;
       }
-    }
-    // Counterclockwise spiral win check
-    for (var c = numCols; c >= 0; c--) {
-      var stack = [];
-      var pivot = c;
-      var r = 0;
-      done = false
-      while (!done) {
-        adjustedPivot = ((pivot % numCols) + numCols) % numCols
-        if (grid[r][adjustedPivot].owner === player) {
-          stack.push({r: r, c: adjustedPivot});
-          pivot--;
-          r++;
-        } else {
-          done = true;
+    });
+
+    function checkWin(player) {
+      // Circular win check
+      for (var r = 0; r < numRows; r++) {
+        var stack = [];
+        for (var c = 0; c < numCols + winLength; c++) {
+          if (grid[r][c % numCols].owner === player) {
+            stack.push({r: r, c: c});
+          } else {
+            stack = [];
+          }
+          if (stack.length === winLength) return true;
         }
-        if (stack.length === winLength) return true;
       }
-    }
-
-    return false; // If no winning conditions are met
-  }
-  
-  /*
-   * Board Drawing
-   */
-
-  (function initBoard() {
-    resetGrid();
-    drawBoard();
-  })();
-
-  function drawBoard() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.beginPath();
-    for (var r = 0; r < numRows + 1; r++) {
-      ctx.arc(250, 250, (r / 4) * 250, 0, 2*Math.PI);
-    }
-    var x = 250;
-    var y = 0;
-    for (var c = 0; c < numCols; c++) {
-      ctx.moveTo(x + 250, y + 250);
-      var temp = x;
-      x = (x * Math.cos(Math.PI / 4)) - (y * Math.sin(Math.PI / 4));
-      y = (temp * Math.sin(Math.PI / 4)) + (y * Math.cos(Math.PI / 4));
-      ctx.lineTo(250, 250);
-    }
-    ctx.stroke();
-  }
-
-  function drawCursor(x, y) {
-    ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  function drawPiece(r, c) {
-    x = grid[r][c].x
-    y = grid[r][c].y
-    player = grid[r][c].owner
-    ctx.beginPath();
-    ctx.arc(x, y, 10, 0, Math.PI * 2);
-    ctx.fillStyle = (player === 1) ? 'blue' : 'red';
-
-    ctx.fill();
-    ctx.stroke();
-  }
-  
-  function updateBoard() {
-    // Clear everything...
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // ... and then redraw everything
-    drawBoard();
-    for (var r = 0; r < numRows; r++) {
+      // Outward win check
       for (var c = 0; c < numCols; c++) {
-        if (grid[r][c].owner) {
-          drawPiece(r, c)
+        var stack = [];
+        for (var r = 0; r < numRows; r++) {
+          if (grid[r][c].owner === player) {
+            stack.push({r: r, c: c});
+          } else {
+            stack = [];
+          }
+          if (stack.length === winLength) return true; 
         }
       }
-    }
-  }
-
-  function resetGrid() {
-    for (var r = 0; r < numRows; r++) {
-      x = ((r * boardRadius / numRows) + (boardRadius / (numRows * 2))) * Math.cos(Math.PI / (numRows * 2))
-      y = ((r * boardRadius / numRows) + (boardRadius / (numRows * 2))) * Math.sin(Math.PI / (numRows * 2))
-      grid[r] = {}
+      // Clockwise spiral win check
       for (var c = 0; c < numCols; c++) {
-        grid[r][c] = {
-          x: x + boardRadius,
-          y: y + boardRadius,
-          owner: null
+        var stack = [];
+        var pivot = c;
+        var r = 0;
+        done = false
+        while (!done) {
+          adjustedPivot = ((pivot % numCols) + numCols) % numCols
+          if (grid[r][adjustedPivot].owner === player) {
+            stack.push({r: r, c: adjustedPivot});
+            pivot++;
+            r++;
+          } else {
+            done = true;
+          }
+          if (stack.length === winLength) return true;
         }
-        oldX = x
-        x = (x * Math.cos(Math.PI / 4)) - (y * Math.sin(Math.PI / 4))
-        y = (oldX * Math.sin(Math.PI / 4)) + (y * Math.cos(Math.PI / 4))
+      }
+      // Counterclockwise spiral win check
+      for (var c = numCols; c >= 0; c--) {
+        var stack = [];
+        var pivot = c;
+        var r = 0;
+        done = false
+        while (!done) {
+          adjustedPivot = ((pivot % numCols) + numCols) % numCols
+          if (grid[r][adjustedPivot].owner === player) {
+            stack.push({r: r, c: adjustedPivot});
+            pivot--;
+            r++;
+          } else {
+            done = true;
+          }
+          if (stack.length === winLength) return true;
+        }
+      }
+
+      return false; // If no winning conditions are met
+    }
+    
+    /*
+     * Board Drawing
+     */
+
+    (function initBoard() {
+      resetGrid();
+      drawBoard();
+    })();
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      for (var r = 0; r < numRows + 1; r++) {
+        ctx.arc(250, 250, (r / 4) * 250, 0, 2*Math.PI);
+      }
+      var x = 250;
+      var y = 0;
+      for (var c = 0; c < numCols; c++) {
+        ctx.moveTo(x + 250, y + 250);
+        var temp = x;
+        x = (x * Math.cos(Math.PI / 4)) - (y * Math.sin(Math.PI / 4));
+        y = (temp * Math.sin(Math.PI / 4)) + (y * Math.cos(Math.PI / 4));
+        ctx.lineTo(250, 250);
+      }
+      ctx.stroke();
+    }
+
+    function drawCursor(x, y) {
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    function drawPiece(r, c) {
+      x = grid[r][c].x
+      y = grid[r][c].y
+      player = grid[r][c].owner
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = (player === 1) ? 'blue' : 'red';
+
+      ctx.fill();
+      ctx.stroke();
+    }
+    
+    function updateBoard() {
+      // Clear everything...
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // ... and then redraw everything
+      drawBoard();
+      for (var r = 0; r < numRows; r++) {
+        for (var c = 0; c < numCols; c++) {
+          if (grid[r][c].owner) {
+            drawPiece(r, c)
+          }
+        }
+      }
+    }
+
+    function resetGrid() {
+      for (var r = 0; r < numRows; r++) {
+        x = ((r * boardRadius / numRows) + (boardRadius / (numRows * 2))) * Math.cos(Math.PI / (numRows * 2))
+        y = ((r * boardRadius / numRows) + (boardRadius / (numRows * 2))) * Math.sin(Math.PI / (numRows * 2))
+        grid[r] = {}
+        for (var c = 0; c < numCols; c++) {
+          grid[r][c] = {
+            x: x + boardRadius,
+            y: y + boardRadius,
+            owner: null
+          }
+          oldX = x
+          x = (x * Math.cos(Math.PI / 4)) - (y * Math.sin(Math.PI / 4))
+          y = (oldX * Math.sin(Math.PI / 4)) + (y * Math.cos(Math.PI / 4))
+        }
       }
     }
   }
-}
+});
+
