@@ -6,13 +6,31 @@
 
 $('#viewport, #leave-button').hide()
 $('#name-field, #join-button').show()
+$('.status').text('');
 
-$('#join-button').click(() => {
+// Kick off game loop when user decides to join
+$('#join-button').click(function() {
+  // ... but exit if they haven't provided a name
+  if ($('#name-field').val() === '') {
+    $('.status').text('Enter a name to start playing.');
+    return;
+  }
 
-  var socket = io(),
+  var socket       = io(),
+      name         = $('#name-field').val(),
       playerNum,
       opponentNum,
       gameId;
+
+  $('#name-field, #join-button').hide()
+  $('#leave-button').show()
+  $('#name-field').val('');
+
+  $('.status').text('Finding another player...');
+
+  socket.emit('requestToJoinGame', {
+    name: name
+  });
 
   socket.on('joinedGame', function(msg) {
     playerNum = msg.playerNum;
@@ -21,12 +39,21 @@ $('#join-button').click(() => {
   });
 
   socket.on('gameReady', function(msg) {
+    $('.status').text('');
+    $('#viewport').show()
     initGame();
   });
 
-  socket.on('gameCanceled', function() {
+  $('#leave-button').on('click', function() {
+    socket.emit('cancelGame');
+  });
+
+  socket.on('gameCanceled', function(msg) {
+    $('.status').text('')
     $('#viewport').off('mousemove, click');
     // Show beginning dialog
+    $('#viewport, #leave-button').hide()
+    $('#name-field, #join-button').show()
   });
 
   function initGame() {
@@ -42,37 +69,12 @@ $('#join-button').click(() => {
     this.winLength     = 4;
     this.turn          = 1;
 
-    socket.on('gameIsOver', function(msg) {
-      endGame(msg.winner);
-    });
-
-    function alternateTurn() {
-      turn = (turn === 1) ? 2 : 1;
-      if (turn !== playerNum){
-        $('.status').text('Waiting for opponent to make a move...')
-      } else {
-        $('.status').text('')
-      }
-    }
-
-    function endGame(winner) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      $('.status').text('Player ' + winner + ' wins!');
-    }
-
-    if (turn !== playerNum) {
-      $('.status').text('Waiting for opponent to make a move...')
-    }
-
-    socket.on('opponentMoveMade', function(msg) {
-      // Alternate turn
-      alternateTurn();
-      grid[msg.r][msg.c].owner = opponentNum;
-      drawPiece(msg.r, msg.c);
-    });
+    /*
+     * Event listeners
+     */
 
     // Handle mapping of mouse position to cursor piece
-    $('#viewport').on('mousemove', (event) => {
+    $('#viewport').on('mousemove', function(event) {
       updateBoard();
 
       // Which position on the board is closest to the mouse's position?
@@ -95,7 +97,7 @@ $('#join-button').click(() => {
     });
 
     // Handle setting a piece on the board
-    $('#viewport').on('click', () => {
+    $('#viewport').on('click', function() {
       if (!grid[currIndex.r][currIndex.c].owner && turn === playerNum) {
         grid[currIndex.r][currIndex.c].owner = playerNum;
         var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
@@ -112,6 +114,47 @@ $('#join-button').click(() => {
           updateBoard();
           alternateTurn();
         }
+      }
+    });
+
+
+    /*
+     * Gameplay Functions
+     */
+
+    function alternateTurn() {
+      turn = (turn === 1) ? 2 : 1;
+      if (turn !== playerNum){
+        $('.status').text('Waiting for opponent to make a move...')
+      } else {
+        $('.status').text('')
+      }
+    }
+
+    function endGame(winner) {
+      resetGrid();
+      $('#viewport').off('mousemove, click');
+      $('.status').text('Player ' + winner + ' wins!');
+      socket.emit('gameOver', {
+        winner: winner
+      });
+    }
+
+    if (turn !== playerNum) {
+      $('.status').text('Waiting for opponent to make a move...')
+    }
+
+    socket.on('opponentMoveMade', function(msg) {
+      grid[msg.r][msg.c].owner = opponentNum;
+      drawPiece(msg.r, msg.c);
+
+      // Check if opposing move was a winning one
+      var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
+      if (winner) {
+        socket.emit('gameOver');
+        endGame(winner);
+      } else {
+        alternateTurn();
       }
     });
 
@@ -179,7 +222,7 @@ $('#join-button').click(() => {
 
       return false; // If no winning conditions are met
     }
-    
+
     /*
      * Board Drawing
      */
@@ -224,7 +267,7 @@ $('#join-button').click(() => {
       ctx.fill();
       ctx.stroke();
     }
-    
+
     function updateBoard() {
       // Clear everything...
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -258,4 +301,3 @@ $('#join-button').click(() => {
     }
   }
 });
-
