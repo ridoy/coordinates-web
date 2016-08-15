@@ -86,7 +86,13 @@ io.on('connection', function(client) {
       client.playerNum = 2;
       availableGame.players.push(client);
       for (var player of availableGame.players) {
-        player.emit('gameReady');
+        var opponent = getOpponent(availableGame.id, player.playerNum)
+        if (opponent) {
+          var opponentName = opponent.name;
+        }
+        player.emit('gameReady', {
+          opponentName: opponentName
+        });
       }
     } else {
       client.gameId = uuid.v1();

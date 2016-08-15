@@ -4,9 +4,10 @@
  * Version: 0.0.1
  */
 
-$('#viewport, #leave-button').hide()
+$('#viewport, #leave-button, #reset-button').hide()
 $('#name-field, #join-button').show()
 $('.status').text('');
+$('.player-names').text('')
 
 // Kick off game loop when user decides to join
 $('#join-button').click(function() {
@@ -18,6 +19,7 @@ $('#join-button').click(function() {
 
   var socket       = io(),
       name         = $('#name-field').val(),
+      winner,
       playerNum,
       opponentNum,
       gameId;
@@ -27,18 +29,21 @@ $('#join-button').click(function() {
   $('#name-field').val('');
 
   $('.status').text('Finding another player...');
+  $('.player-names').text('')
 
   socket.emit('requestToJoinGame', {
     name: name
   });
 
   socket.on('joinedGame', function(msg) {
+    // 1 is blue, 2 is red
     playerNum = msg.playerNum;
     opponentNum = (playerNum === 1) ? 2 : 1;
     gameId = msg.gameId
   });
 
   socket.on('gameReady', function(msg) {
+    $('.player-names').text(name + ' (You) vs. ' + msg.opponentName)
     $('.status').text('');
     $('#viewport').show()
     initGame();
@@ -48,13 +53,6 @@ $('#join-button').click(function() {
     socket.emit('cancelGame');
   });
 
-  socket.on('gameCanceled', function(msg) {
-    $('.status').text('')
-    $('#viewport').off('mousemove, click');
-    // Show beginning dialog
-    $('#viewport, #leave-button').hide()
-    $('#name-field, #join-button').show()
-  });
 
   function initGame() {
     this.canvas        = document.getElementById('viewport');
@@ -100,12 +98,10 @@ $('#join-button').click(function() {
     $('#viewport').on('click', function() {
       if (!grid[currIndex.r][currIndex.c].owner && turn === playerNum) {
         grid[currIndex.r][currIndex.c].owner = playerNum;
-        var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
+        winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
         if (winner) {
           ctx.clearRect(0,0,canvas.width, canvas.height)
-          $('.status').text(winner + ' wins!')
-          socket.emit('gameOver');
-          endGame(winner);
+          endGame();
         } else {
           socket.emit('moveMade', {
             r: currIndex.r,
@@ -131,13 +127,31 @@ $('#join-button').click(function() {
       }
     }
 
-    function endGame(winner) {
-      resetGrid();
+    $('#reset-button').one('click', function() {
+      returnToMenu();
+    });
+
+    socket.on('gameCanceled', function(msg) {
+      $('.player-names').text('')
       $('#viewport').off('mousemove, click');
-      $('.status').text('Player ' + winner + ' wins!');
-      socket.emit('gameOver', {
-        winner: winner
-      });
+      console.log(winner, playerNum);
+      var text = (winner === playerNum) ? 'You won!' : 'Your opponent won :(';
+      $('.status').text(text);
+      $('#leave-button').hide();
+      $('#reset-button').show();
+    });
+
+    function returnToMenu() {
+      resetGrid();
+      $('.player-names').text('')
+      $('.status').text('')
+      // Show beginning dialog
+      $('#viewport, #leave-button, #reset-button').hide()
+      $('#name-field, #join-button').show()
+    }
+
+    function endGame() {
+      socket.emit('gameOver');
     }
 
     if (turn !== playerNum) {
@@ -149,10 +163,9 @@ $('#join-button').click(function() {
       drawPiece(msg.r, msg.c);
 
       // Check if opposing move was a winning one
-      var winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
+      winner = (checkWin(1)) ? 1 : (checkWin(2)) ? 2 : null
       if (winner) {
-        socket.emit('gameOver');
-        endGame(winner);
+        endGame();
       } else {
         alternateTurn();
       }
@@ -234,6 +247,7 @@ $('#join-button').click(function() {
 
     function drawBoard() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'black';
       ctx.beginPath();
       for (var r = 0; r < numRows + 1; r++) {
         ctx.arc(250, 250, (r / 4) * 250, 0, 2*Math.PI);
@@ -251,6 +265,7 @@ $('#join-button').click(function() {
     }
 
     function drawCursor(x, y) {
+      ctx.strokeStyle = (playerNum === 1) ? 'blue' : 'red';
       ctx.beginPath();
       ctx.arc(x, y, 10, 0, Math.PI * 2);
       ctx.stroke();
@@ -262,6 +277,7 @@ $('#join-button').click(function() {
       player = grid[r][c].owner
       ctx.beginPath();
       ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.strokeStyle = 'black';
       ctx.fillStyle = (player === 1) ? 'blue' : 'red';
 
       ctx.fill();
