@@ -9,7 +9,7 @@
 
 Two players take turns placing pegs onto the board. You can win with any of these four patterns:
 
-<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/circular.png" width="100" height="100">
-<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/outward.png" width="100" height="100">
-<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/cw%20spiral.png" width="100" height="100">
-<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/ccw%20spiral.png" width="100" height="100">
+<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/circular.png" width="200" height="200">
+<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/outward.png" width="200" height="200">
+<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/cw%20spiral.png" width="200" height="200">
+<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/ccw%20spiral.png" width="200" height="200">
