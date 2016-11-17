@@ -1,19 +1,29 @@
 <!DOCTYPE HTML>
 <html>
-  <head>
-    <title>Coordinates Multiplayer</title>
-    <script src='https://code.jquery.com/jquery-3.1.0.min.js'></script>  
-  </head>
-  <body>
-    <input id='name-field' placeholder='Your Name (optional)' type='text'>
-    <button id='join-button'>Start Playing</button>
-    <canvas id='viewport'>
-    </canvas>
-    <p class='player-names'></p>
-    <p class='status'></p>
-    <button id='leave-button'>Leave Game</button>
-    <button id='reset-button'>Play Again</button>
-    <script src='/socket.io/socket.io.js'></script>
-    <script src='./js/coordinates.js'></script>
-  </body>
+
+    <head>
+        <title>Coordinates Multiplayer</title>
+        <script src='https://code.jquery.com/jquery-3.1.0.min.js'></script>  
+        <link href='style.css' rel='stylesheet'>
+    </head>
+
+    <body>
+        <center>
+            <div class='container'>
+                <input id='name-field' placeholder='Your Name (optional)' type='text'>
+                <button id='join-button'>Start Playing</button>
+                <span class='player-names'></span>
+                <span class='status'></span>
+                <br/>
+                <button id='leave-button'>Leave Game</button>
+                <button id='reset-button'>Play Again</button>
+            </div>
+            <canvas id='viewport'>
+            </canvas>
+        </center>
+
+        <script src='/socket.io/socket.io.js'></script>
+        <script src='./js/coordinates.js'></script>
+    </body>
+
 </html>
