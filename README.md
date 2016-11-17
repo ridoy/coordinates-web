@@ -10,8 +10,8 @@
 Two players take turns placing pegs onto the board. You can win with any of these four patterns:
 
 
-![]()
-![]()
-![]()
-![]()
+![](https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/ccw%20spiral.png)
+![](https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/cw%20spiral.png)
+![](https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/outward.png)
+![](https://raw.githubusercontent.com/ridoy/coordinates-web/master/img/circular.png)
 
