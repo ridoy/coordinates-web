@@ -19,8 +19,8 @@ Two players take turns placing pegs onto the board. You win when you place four 
 
 **Clockwise Spiral**
 
-<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/public/img/cw%20spiral.png" width="300" height="300">
+<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/public/img/cw_spiral.png" width="300" height="300">
 
 **Counterclockwise Spiral**
 
-<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/public/img/ccw%20spiral.png" width="300" height="300">
+<img src="https://raw.githubusercontent.com/ridoy/coordinates-web/master/public/img/ccw_spiral.png" width="300" height="300">

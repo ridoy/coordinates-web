@@ -1,5 +1,6 @@
 body {
     color: white;
+    font-family: 'Helvetica', sans-serif;
     background-color: rgb(39, 39, 47);
 }
 
@@ -9,4 +10,22 @@ a {
 
 .container {
     padding: 20px;
+}
+
+#examples-wrapper {
+    width: 650px;
+}
+
+#examples-left-col {
+    float: left;
+    width: 300px;
+}
+
+#examples-right-col {
+    float: right;
+    width: 300px;
+}
+
+.example {
+    width: 300px;
 }
