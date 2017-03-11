@@ -3,6 +3,10 @@ body {
     background-color: rgb(39, 39, 47);
 }
 
+a {
+    color: white;
+}
+
 .container {
     padding: 20px;
 }

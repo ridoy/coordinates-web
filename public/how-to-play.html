@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+
+    <head>
+        <title>Coordinates Multiplayer</title>
+        <script src='https://code.jquery.com/jquery-3.1.0.min.js'></script>  
+        <link href='style.css' rel='stylesheet'>
+    </head>
+
+    <body>
+        <center>
+            <p>Coordinates is Tic-tac-toe on a polar coordinate grid!</p>
+
+            <p>It's more challenging (therefore more fun) than regular Tic-tac-toe.</p>
+
+            <p>You win if you get 4 dots in any of these formations:</p>
+
+            <div id='.examples-wrapper'>
+                <div id='.examples-left-col'>
+                </div>
+                <div id='.examples-right-col'>
+                </div>
+            </div>
+        </center>
+
+        <script src='/socket.io/socket.io.js'></script>
+        <script src='./js/coordinates.js'></script>
+    </body>
+
+</html>

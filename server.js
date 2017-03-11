@@ -64,8 +64,8 @@ function printGames() {
         for (var player of game.players) {
             playerNames += player.name + ' & ';
         }
-        playerNames = playerNames.slice(0, -3);
-        console.log('- Game ' + game.id + ' with players ' + playerNames)
+        playerNames = playerNames.slice(0, -3); // remove trailing ' & '
+        console.log('- ' + playerNames + ' in game ' + game.id)
     }
 }
 
